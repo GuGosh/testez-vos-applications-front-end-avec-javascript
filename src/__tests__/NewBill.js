@@ -9,10 +9,16 @@ import NewBill from "../containers/NewBill.js"
 import { localStorageMock } from "../__mocks__/localStorage.js";
 import mockStore from "../__mocks__/store"
 import store from '../app/store';
+import router from "../app/Router.js";
 
-import { ROUTES } from "../constants/routes.js";
+
+import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
 
 jest.mock("../app/store", () => mockStore)
+
+const onNavigate = (pathname) => {
+  document.body.innerHTML = ROUTES({ pathname })
+}
 
 
 describe("Given I am connected as an employee", () => {
@@ -74,12 +80,16 @@ describe("Given I am connected as an employee", () => {
         Object.defineProperty(window, 'localStorage', {
           value: localStorageMock
         })
+        const root = document.createElement("div")
+        root.setAttribute("id", "root")
+        document.body.append(root)
+        router()
+        window.onNavigate(ROUTES_PATH.Bills)
         window.localStorage.setItem('user', JSON.stringify({
-          type: 'Employee'
+          type: 'Employee',
+          email: "a@a"
         }))
-        const onNavigate = (pathname) => {
-          document.body.innerHTML = ROUTES({ pathname })
-        }
+
         const html = NewBillUI()
         document.body.innerHTML = html
 
@@ -90,63 +100,94 @@ describe("Given I am connected as an employee", () => {
           localStorage: window.localStorage
         })
 
-        // Init newBill
-        const formData = new FormData();
-        formData.append('file', new File(['bill.jpeg'], 'bill.jpeg', { type: 'image/jpeg' }));
-        formData.append('email', 'employee@example.com');
+        const inputData = {
+          expense_name: "Admin",
+          date: "2019-08-21",
+          amount: "100",
+          vat: "20",
+          pct: "20",
+          commentary: "commentaire dépense",
+          file: [new File(['bill.jpeg'], 'bill.jpeg', { type: 'image/jpeg' })],
+        };
 
-        const billsCreate = jest.fn(() => store.bills().create({
-          data: formData,
-          headers: {
-            noContentType: true
-          }
-        }));
+        const inputExpenseName = screen.getByTestId("expense-name");
+        fireEvent.change(inputExpenseName, { target: { value: inputData.expense_name } });
+        expect(inputExpenseName.value).toBe(inputData.expense_name);
+
+        const inputDate = screen.getByTestId("datepicker");
+        fireEvent.change(inputDate, {
+          target: { value: inputData.date },
+        });
+        expect(inputDate.value).toBe(inputData.date);
+
+        const inputAmount = screen.getByTestId("amount");
+        fireEvent.change(inputAmount, {
+          target: { value: inputData.amount },
+        });
+        expect(inputAmount.value).toBe(inputData.amount);
+
+        const inputVat = screen.getByTestId("vat");
+        fireEvent.change(inputVat, {
+          target: { value: inputData.vat },
+        });
+        expect(inputVat.value).toBe(inputData.vat);
+
+        const inputPct = screen.getByTestId("pct");
+        fireEvent.change(inputPct, {
+          target: { value: inputData.pct },
+        });
+        expect(inputPct.value).toBe(inputData.pct);
+
+        const inputCommentary = screen.getByTestId("commentary");
+        fireEvent.change(inputCommentary, {
+          target: { value: inputData.commentary },
+        });
+        expect(inputCommentary.value).toBe(inputData.commentary);
+
+        console.log(inputData.file[0]);
+        const inputFile = screen.getByTestId("file");
+        fireEvent.change(inputFile, {
+          target: { files: inputData.file },
+        });
+        expect(inputFile.files).toBe(inputData.file);
 
         const handleSubmit = jest.fn((e) => newBills.handleSubmit)
         const newBillForm = screen.getByTestId('form-new-bill')
         newBillForm.addEventListener("submit", handleSubmit)
-
         fireEvent.submit(newBillForm)
 
-        expect(handleSubmit).toHaveBeenCalled()
-
-        /*mockStore.bills.mockImplementationOnce(() => {
-          return {
-            create: ({
-              data: JSON.stringify(
-                {
-                  id: "BeKy5Mo4jkmdfPGYpTxZ",
-                  vat: "",
-                  amount: 100,
-                  name: "test1",
-                  fileName: "1592770761.jpeg",
-                  commentary: "plop",
-                  pct: 20,
-                  type: "Transports",
-                  email: "a@a",
-                  fileUrl: "https://test.storage.tld/v0/b/billable-677b6.a…61.jpeg?alt=media&token=7685cd61-c112-42bc-9929-8a799bb82d8b",
-                  date: "2001-01-01",
-                  status: "refused",
-                  commentAdmin: "en fait non"
-                }
-              )
-            })
-          }
-        })*/
-
-
-        /*mockStore.create({
-          data: JSON.stringify(newBill),
-          headers: {
-            noContentType: true
-          }
-        })*/
-        //const bills = await mockStore.create(newBill);
-
-        // getSpyPost must have been called once
-        //expect(getSpyPost).toHaveBeenCalledTimes(1);
-        // The number of bills must be 5 
+        expect(window.location.pathname).toBe('/')
+        expect(window.location.hash).toBe(ROUTES_PATH.Bills)
+        expect(store.bills).toHaveBeenCalled()
+        //        expect(handleSubmit).toHaveBeenCalled()
       });
+
+      test.skip('Then the file type is checked on change', () => {
+        Object.defineProperty(window, 'localStorage', {
+          value: localStorageMock
+        })
+        const root = document.createElement("div")
+        root.setAttribute("id", "root")
+        document.body.append(root)
+        router()
+        window.onNavigate(ROUTES_PATH.Bills)
+        window.localStorage.setItem('user', JSON.stringify({ type: 'Employee' }))
+        document.body.innerHTML = NewBillUI()
+
+        const newBill = new NewBill({ document, onNavigate, store, localStorage: window.localStorage })
+        const imgMock = new File(['(⌐□_□)'], 'file.jpg', { type: 'image/jpg' })
+        const badImgMock = new File(['(⌐□_□)'], 'file.pdf', { type: 'application/pdf' })
+        const fileInput = screen.getByTestId('file')
+        const handleChangeFile = jest.fn((e) => newBill.handleChangeFile(e))
+
+        fileInput.addEventListener('change', handleChangeFile)
+        fireEvent.change(fileInput, { target: { files: [imgMock] } })
+        expect(handleChangeFile).not.toHaveReturnedWith(true)
+
+        fireEvent.change(fileInput, { target: { files: [badImgMock] } })
+        expect(handleChangeFile).toHaveReturnedWith(false)
+        expect(handleChangeFile).toHaveBeenCalled()
+      })
 
       test('Add bill to API and fails with 404 message error', async () => {
         mockStore.bills.mockImplementationOnce(() => {

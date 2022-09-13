@@ -17,8 +17,9 @@ export default class NewBill {
   }
   handleChangeFile = e => {
     e.preventDefault()
-    const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
-    const filePath = e.target.value.split(/\\/g)
+    const file = this.document.querySelector('input[data-testid="file"]')
+    console.log(file);
+    const filePath = file.value.split(/\\/g)
     const fileName = filePath[filePath.length - 1]
     const imgExtension = ['jpg', 'jpeg', 'png']
     const fileExtension = fileName.split('.').pop()
@@ -28,7 +29,6 @@ export default class NewBill {
       const email = JSON.parse(localStorage.getItem("user")).email
       formData.append('file', file)
       formData.append('email', email)
-
       this.store
         .bills()
         .create({
@@ -43,13 +43,12 @@ export default class NewBill {
           this.fileUrl = fileUrl
           this.fileName = fileName
         }).catch(error => console.error(error))
-    } else {
-      this.document.querySelector(`input[data-testid="file"]`).value = '';
+      return true;
     }
+    return false;
   }
   handleSubmit = e => {
     e.preventDefault()
-    console.log('e.target.querySelector(`input[data-testid="datepicker"]`).value', e.target.querySelector(`input[data-testid="datepicker"]`).value)
     const email = JSON.parse(localStorage.getItem("user")).email
     const bill = {
       email,
