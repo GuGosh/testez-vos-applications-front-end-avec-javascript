@@ -21,9 +21,29 @@ const row = (bill) => {
 
 const rows = (data) => {
   // sort bills
+  console.log(data);
+  const monthMapping = {
+    'Jan': 'Jan',
+    'Fév': 'Feb',
+    'Mar': 'Mar',
+    'Avr': 'Apr',
+    'Mai': 'May',
+    'Juin': 'Jun',
+    'Juil': 'Jul',
+    'Août': 'Aug',
+    'Sept': 'Sep',
+    'Oct': 'Oct',
+    'Nov': 'Nov',
+    'Déc': 'Dec'
+  };
+
   return (data && data.length)
     ? data
-      .sort((a, b) => a.date < b.date ? 1 : -1)
+      .sort((a, b) => {
+        const dateA = new Date(a.date.replace(/(\d{2}) (\w+)\. (\d{2})/, (_, day, month, year) => `${day} ${monthMapping[month]} 20${year}`));
+        const dateB = new Date(b.date.replace(/(\d{2}) (\w+)\. (\d{2})/, (_, day, month, year) => `${day} ${monthMapping[month]} 20${year}`));
+        return dateB - dateA;
+      })
       .map(bill => row(bill))
       .join("")
     : ""
